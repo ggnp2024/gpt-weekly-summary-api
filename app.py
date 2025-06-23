@@ -24,3 +24,7 @@ def generate_summary():
             f.write(f"• {bullet}\n")
 
     return send_file(file_path, as_attachment=True, download_name=filename)
+
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 5000))  # default to 5000 for local dev
+    app.run(host="0.0.0.0", port=port)

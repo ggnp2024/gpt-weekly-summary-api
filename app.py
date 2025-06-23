@@ -1,6 +1,7 @@
-from flask import Flask, request, send_file
+from flask import Flask, request, jsonify
 from datetime import datetime
 import os
+import requests
 
 app = Flask(__name__)
 
@@ -11,7 +12,7 @@ def generate_summary():
     email_summary = data.get("emailSummary", "")
     bullets = data.get("bullets", [])
 
-    filename = f"Weekly_Accomplishment_Summary_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt"
+    filename = f"Weekly_Summary_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt"
     file_path = os.path.join("/tmp", filename)
 
     with open(file_path, "w") as f:
@@ -23,8 +24,12 @@ def generate_summary():
         for bullet in bullets:
             f.write(f"• {bullet}\n")
 
-    return send_file(file_path, as_attachment=True, download_name=filename)
+    # Upload to file.io
+    with open(file_path, "rb") as file_to_upload:
+        response = requests.post("https://file.io", files={"file": file_to_upload})
 
-if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))  # default to 5000 for local dev
-    app.run(host="0.0.0.0", port=port)
+    if response.ok:
+        file_url = response.json().get("link")
+        return jsonify({"fileUrl": file_url})
+    else:
+        return jsonify({"error": "Upload failed"}), 500
